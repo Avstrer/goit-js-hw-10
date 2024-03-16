@@ -3,6 +3,11 @@ import flatpickr from 'flatpickr';
 // Додатковий імпорт стилів
 import 'flatpickr/dist/flatpickr.min.css';
 
+// Описаний у документації
+import iziToast from 'izitoast';
+// Додатковий імпорт стилів
+import 'izitoast/dist/css/iziToast.min.css';
+
 function convertMs(ms) {
   // Number of milliseconds per unit of time
   const second = 1000;
@@ -25,11 +30,10 @@ function convertMs(ms) {
 let userSelectedDate;
 
 const input = document.querySelector('#datetime-picker');
-const button = document.querySelector('data-start');
-console.log(button);
+const button = document.querySelector('[data-start]');
+const timerElement = document.querySelectorAll('.value');
 
-const currentData = Date.now();
-console.log(currentData);
+button.setAttribute('disabled', 'true');
 
 const flatInput = flatpickr('#datetime-picker', {
   enableTime: true,
@@ -39,19 +43,37 @@ const flatInput = flatpickr('#datetime-picker', {
   onClose(selectedDates) {
     // console.log(selectedDates[0]);
     userSelectedDate = selectedDates[0];
-    if (userSelectedDate.getTime() < currentData) {
-      alert('Please choose a date in the future');
+    if (userSelectedDate.getTime() < Date.now()) {
+      iziToast.error({
+        title: 'Error!',
+        messageColor: 'red',
+        message: 'Please choose a date in the future',
+        position: 'topRight',
+      });
+      button.setAttribute('disabled', 'true');
+    } else {
+      input.setAttribute('disabled', 'true');
+      button.removeAttribute('disabled');
     }
-    console.log(userSelectedDate.getTime());
   },
 });
-// console.log(userSelectedDate);
 
-// console.log(currentData);
+button.addEventListener('click', timerFunctionListener);
 
-// const clientData = new Date('03 24 2003');
-// console.log(clientData.getTime());
+function timerFunctionListener(event) {
+  event.preventDefault();
+  button.setAttribute('disabled', 'true');
+  const interval = setInterval(() => {
+    const different = userSelectedDate.getTime() - Date.now();
 
-// const value = currentData - clientData;
-// console.log(value);
-// console.log(convertMs(value));
+    const time = convertMs(different);
+    timerElement[0].textContent = time.days.toString().padStart(2, '0');
+    timerElement[1].textContent = time.hours.toString().padStart(2, '0');
+    timerElement[2].textContent = time.minutes.toString().padStart(2, '0');
+    timerElement[3].textContent = time.seconds.toString().padStart(2, '0');
+    if (different < 1500) {
+      clearInterval(interval);
+      input.setAttribute('disabled', 'false');
+    }
+  }, 1000);
+}
